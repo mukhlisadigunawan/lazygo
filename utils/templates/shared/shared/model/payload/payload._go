@@ -1,0 +1,11 @@
+package payload
+
+import (
+    "{{.PackagePath}}/shared/lazygo"
+)
+
+type Payload struct {
+	Data      any            `json:"data"`
+	Publisher lazygo.ApplicationData `json:"publisher"`
+	TraceID   string                 `json:"traceId"`
+}

@@ -1,0 +1,59 @@
+{
+  "cache": {
+    "redis": {
+      "address": "localhost",
+      "db": 0,
+      "password": "",
+      "port": 6379
+    }
+  },
+  "database": {
+    "mongodb": {
+      "database": "localdatabase",
+      "host": [
+        "localhost:27017"
+      ],
+      "password": "password123",
+      "replica_set": "",
+      "ssl": false,
+      "username": "admin"
+    },
+    "mysql": {
+      "conn_max_idle_time": 1,
+      "conn_max_lifetime": 2,
+      "database": "localdatabase",
+      "host": "localhost",
+      "max_idle_conns": 30,
+      "max_open_conns": 100,
+      "monitor_conn_pool": false,
+      "monitor_conn_pool_interval": 1,
+      "password": "localpassword",
+      "port": 3306,
+      "user": "localuser"
+    }
+  },
+  "jwt_secret_key": "21ffdae1f43e02fcfb18a508ad0086f55cb037dc89694246a925577c92678629798f80d698bfc391614d006762b521ded3ee209e5b8d931f13ecebe5752d7688",
+  "message_broker": {
+    "amqp_config": {
+      "auto_delete": false,
+      "durable": true,
+      "exchange_name": "paxel_incentive_exchange",
+      "exchange_type": "direct",
+      "internal": false,
+      "no_wait": false,
+      "queue": {
+        "attendance_process": "queue.paxelincentive.attendance.process"
+      }
+    },
+    "rabbitmq": {
+      "address": "localhost",
+      "password": "password123",
+      "port": 5672,
+      "username": "admin",
+      "vhost": "paxel_incentive"
+    }
+  },
+  "servers": {
+  },
+  "app_mode": "dev"
+}

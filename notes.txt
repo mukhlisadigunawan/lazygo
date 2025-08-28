@@ -1,0 +1,1024 @@
+
+addon later
+    nambahin transaction
+    nambahin default gorm dan gin
+    perbaiki error_func
+    tambahkan const
+    perbaiki enum
+    bisa pilih log library
+    create new usecase will create new interactor
+    create new test will adding new unexisting method
+    tambahin komen di tiap template
+    tambahkan traceID
+
+
+gogen2 gateway prod CreateOrder
+gogen2 gateway prod CreateOrder ShowOrder
+gogen2 gateway prod *
+gogen2 gateway prod.mobile CreateOrder
+
+usecase
+    menerima nama usecase
+    akan membuat folder usecase/<namausecase>
+    membuat 3 file yaitu inport.go, outport.go dan interactor.go dibawah folder tersebut
+    next feature: jika dipanggil untuk kedua kalinya, maka akan membuat file interactor baru
+    dengan diberi tambahan index sesuai jumlah interactor dibelakang nama interactor baru tersebut
+
+test
+    menerima nama test dan nama usecase
+    akan membaca Outport yang berisi semua method yang dibutuhkan untuk menjalankan usecase tersebut
+    membuat file test dibawah folder usecase yang sesuai dengan nama testcase_<namatest>_test.go
+    nextfeature: jika dipanggil untuk kedua kalinya
+    maka akan menambahkan method yang mungkin baru saja ditambahkan di Outport usecase
+
+entity
+    menerima nama entity
+    membuat file entity dengan nama entity dibawah folder domain/entity/<namaentity>.go
+    jika dipanggil untuk kedua kalinya maka akan muncul pesan error
+
+error
+    menerima nama error
+    membuatkan struktur folder dibawah application/apperror
+    jika belum ada, membuat error_func.go file yang berisi fungsionalitas umum untuk error
+    jika belum ada, membuat error_enum.go file yang berisi koleksi error code dan message
+    jika file error_enum.go sudah ada maka hanya akan menambahkan error line nya saja
+    jika dipanggil untuk kedua kalinya maka akan muncul pesan error
+
+repository
+    menerima nama repository, nama entity dan nama usecase sebagai parameter opsional
+    jika file repository.go belum ada, maka akan membuat folder dan file domain/repository/repository.go
+    jika entity belum ada, maka akan membuatkan entity dibawah domain/entity/<namaentity>.go
+    jika menerima nama usecase, maka akan menginjeksikan repo tersebut didalam struct Outport
+    jika diberi injection point didalam interactor, maka akan menginjeksikan code repository
+
+gateway
+    menerima nama gateway dan nama usecase
+    membaca Outport dari usecase dan mengkoleksi semua method dari Outport tersebut
+    jika belum ada, membuat folder dan file gateway/<namagateway>/implementation.go
+    membuat struct Gateway yang berisi semua method dari Outport usecase tersebut
+    jika dipanggil untuk kedua kalinya maka baca dan koleksi semua function yang sudah ada dari
+    struct Gateway tersebut, yang mana beberapa implementasi mungkin saja sudah dipindah ke file lain
+    perintah kedua kalinya ini hanya akan menambahkan function baru saja ke dalam implementation.go
+
+controller
+    menerima nama controller dan nama usecase
+    membuat folder controller/<namacontroller>
+    membuat file controller/controller.go berisi interface
+    membuat file controller/<namacontroller>/response.go
+    membuat file controller/<namacontroller>/interceptor.go
+    membuat file controller/<namacontroller>/handler_<namausecase>.go
+    membuat file controller/<namacontroller>/router.go
+    menginjeksikan inport yang sesuai usecase kedalam struct Controller
+    menginjeksikan router yang sesuai kedalam method RegisterRouter
+
+registry
+    menerima nama registry dan nama controller
+    akan membaca semua usecase yang terdaftar dalam controller
+    coba membaca gateway, jika cuma 1 gateway, maka akan langsung dipakai
+    jika ada lebih dari 1 gateway, maka akan diminta untuk memilih
+    jika filenya sudah ada maka akan diberi pesan info saja
+    membuat folder application/registry
+    membuat file application/application.go berisi interface
+    membuat file application/<namaregistry>.go berisi implementation
+
+Method
+    read entity
+    create an entity's method
+
+ValueObject
+    create a valueobject
+
+ValueString
+    create a valuestring
+
+Enum
+    create an enum
+    create error
+
+
+Mapper
+
+Init
+
+Config
+
+Template
+
+
+https://betterprogramming.pub/rpc-in-golang-19661033942
+https://medium.com/rungo/building-rpc-remote-procedure-call-network-in-go-5bfebe90f7e9
+
+kalo implementasi gateway ada di struct lain? kita harus bisa handle dan tidak perlu di extend lagi
+
+Controller dikategorikan berdasarkan actor yang mengakses usecase
+    user api
+    backoffice api
+    dev api
+    webhook api
+
+<ControllerName>Controller
+    RegisterHandler()
+    handle<UsecaseName>(inport)
+
+Read Gateway
+    Kita cari outport interface dari usecase yang di inginkan
+    baca seluruh field interface nya
+    ada 4 kemungkinan dari field tsb
+    1. berupa extension interface lain yang berada di package yang berbeda
+    2. berupa extension interface lain yang berada di dalam package dan file yang sama : BELUM DIHANDLE
+    3. berupa extension interface lain yang berada di dalam package namun file yang berbeda : BELUM DIHANDLE
+    4. berupa direct method
+        jika parameter punya type yang berada di packgae yg sama : BELUM DIHANDLE
+
+    tujuannya adalah mengkoleksi semua method yang dibutuhkan
+
+usecase
+test
+entity
+repository
+application
+gateway
+error
+controller
+
+registry
+service
+valueobject
+valuestring
+enum
+init
+config
+
+why we are using an architecture?
+- because we must manage many service
+- because we have to handle the interaction between service
+- because development is never stop
+- because we want to sleep better
+
+there are 3 types of architecture:
+- "yang penting bisa jalan" architecture
+- "ikut-ikutan" architecture
+- "well concepted" architecture
+
+how the memory/cpu performance when using this archietcture?
+- is not a relevant question because
+- what we want to achieve in architecture is performance in development process
+- it doesnt mean we ignore the memory/cpu performance
+
+why using a code generator?
+- because we are lazy
+- we immediately want to focus on business process instead of ceremony and boilerplate code
+- we want consistent structure
+
+why or when you are using "copy and paste" instead of code generator?
+- when you are lazy to use code generator
+- but you need to assure the structure
+
+3 phase on achieve something
+- motivation -> why
+- theory -> what (limitation, known, unknown)
+- practise -> how
+
+step by step how to work with this architecture:
+- create the usecase and entity
+- create the gateway
+- create the controller
+- create the registry
+
+i recommend you to design the class diagram first and the interaction between class
+but sometime you can just start from usecase if you think that you handle the class diagram later.
+sometimes both
+can thinking on how do we store some information
+how do we perform some action and which data is added or updated after an that
+
+prefer to design by class diagram than relational database table
+
+before you start coding, you must have and understand
+- the big picture of system
+- clear design and data structure of your system
+- the usecases of specific system
+
+we can answer all question from product design
+
+every system must pay respect each other
+one system must not access the data directly
+
+usecase
+- organize business logic, orchestrate repository and service call
+- usecase is first class citizen
+- put the respect to the usecase
+- usecase driven approach paradigm
+- always start concepting system from usecase
+- usecase say everything about the system
+- usecase don't care what technology you use
+- usecase is a blackbox
+- usecase basically manage interaction between entity and run some action
+- usecase said
+    - i don't care how the way you are calling me but if you want to run me, i need you to do two things:
+    - input some params in inport, and i don't care how you call it
+    - fullfil anything in outport, and i don't care how you implement it
+
+too many usecase is also a code smell.
+when a project has so many usecase we need to separate it into the other repo project
+
+make sure to always return error and handle it. never ever ignore it
+if we call a method and the not return (error == nil) means this method is success
+
+problem on controller-service-repository
+- one repo has many method
+- one service has many repo
+- one class has may service as usecase
+- many usecase in one file
+
+- we want to separate logic code and infrastructure code
+- save time because we think less for naming (one of "hardest" think in programming), conventions and structure
+- Increase readability, scream arcitecture
+- built for lazy developer
+- consistent structure
+- gogen is zero dependency
+- gogen is not engine it just a "well written code" so there is no performance issue
+- registry name is an application name
+- the power of copy and paste
+- deleting is easier than creating
+- gogen support multiple application in one repo
+- sequence diagram explain the usecase per user task
+- implement trace id in every usecase Request
+- support lazy documentation. no need to work twice only to write/update doc
+- thinking in oop perspective first instead of database perspective.
+- gogen is not to eliminate boilerplate code. but for helping you write a code layout
+- suitable for new project and revamp existing project per service
+- allow you to do code modification for experimental purpose without changing the current implementation
+- Private/internal struct for controller
+- manual depedency injection
+
+Fact
+- all repository is interface
+- almost all the repository only have one method
+- controller may call multi usecase via inport
+- service can be a simple function or an interface
+- All method in repository and service have a context in its first params
+
+ideally repository interface has only one method on it
+then in what condition an interface can have more than one method?
+- when the client of that interface guarantee will call one or more from all the method on it
+- sample : repository for transaction that have begin commit and rollback
+
+violation of interface method
+- when one of method is guarantee will never called
+
+benefit of simple interface
+- easy to mock and test simulation
+
+what is handled by entity
+- collection data as object
+- action related to that object only
+- use other entity
+- use value object
+
+what should you only call/do in interactor?
+- any method available in Outport (repository/service)
+- entity
+- value object
+- do the simple logic like looping condition checking
+
+what can you put in InportRequest?
+- simple builtin data type as field
+- we can also expose the func for advanced usage
+
+what can you put in InportResponse?
+- we can expose simple builtin data type (more recommended)
+- we can also expose our Entity or Value Object
+
+can we use entity as database structure?
+- i recommend not to use it to database structure
+- create the other structure in gateway is better but you must create a mapper for this
+
+what you can declare in Outport?
+- (mostly) repository
+- service
+- direct method
+
+how to decide whether to use service instead of direct method?
+- it is depend on the question "are we will sharing it to other usecase?"
+- if we think that we want to share the method to other usecase then put it to the service
+- otherwise put it as direct method in outport
+- we can promoted direct method to service if it is used by other usecase
+
+what is entity
+- mutable object that has an id
+- two entity is a same object if the id is similar even all of the field value is different
+- entity can be a aggregate for other entity
+- entity has its own factory method as constructor
+
+what is value object?
+- imutable object that all the field combination as an id
+- two value object is a same object if all of the field value is different
+- changing single value on any field will make it treated as different object
+
+why we need value object?
+- to objectify the value instead of using primitive datatype, for ex:
+- address has a street, number, city,
+- price has a amount, currency and must not negative (depend on bussiness process)
+
+what will handled by repository?
+- anything that related to data storage
+- Find, Save, Delete, or Update data
+- always passing the entity or primitve type
+- make sure not use a loot of parameter
+
+if you find a lot of parameter inf a function/method
+then it can be wrapped to the struct
+
+what is handled by service (when we use service?)
+- anything that is not related to data storage
+- anything that canot be handled by method entity
+- when it is hard to find to which Entity that behavior belongs
+- contains business invariants that are too complex to be stored in a single Entity or Value Object
+- generating id which used in interactor
+- publishing message to message broker
+- basically it is an interface. But it can be a function that has a repository and entity
+- does not hold any state
+
+how to naming the controller?
+- we are naming it by the actor who is accessing it
+- for example: mobileapi, userapi, restapi, backoffice, consumer, webhook
+
+how to naming the registry?
+- we are naming it by your application/service name
+- for ex: paymentservice, shippingservice, backofficeservice
+
+how to naming the gateway?
+- we are naming it by your enviroment
+- you can using different gateway if you want to make a simulation without changing the existing implementation
+- for ex: prod (for production), local (for local db), experimental, mockdb, inmemory
+
+how to naming the usecase?
+- use simple 2 or 3 word that describe the action
+
+there are two types of usecase
+- command (or called an action)
+- query (displaying information only without changing the data)
+
+who is using infrastructure?
+- controller: log, server, consumer, util, token
+- gateway: log, database, publisher, util, token, cache
+- registry: log,
+
+make sure to naming bool variable as positif word
+
+when to use panic?
+- when you first time initialize the system
+- never call it in runtime method otherwise your system will stop and crash suddenly
+
+any repository, service or method in entity at least always return the error
+any repository and service method must have context.Context in its first params
+
+You are not allowed to call util directly from entity or service
+
+service may include the repository
+
+avoid init method
+
+follow the rule even you are not understand yet
+
+what is benefit of using the repository/service interface instead of make your own method?
+- you can reuse the existing implementation without writing the new one
+
+what if you want to create your own implementation but still using existing repository/service interface?
+- you can create your own method on outport
+- or you can create your own implementation in gateway by create new gateway
+
+sample case:
+- upload image to Google Content Store
+
+We always start from
+- Data structure using class diagram database table
+- According to DDD
+
+-
+
+app_instance xxxx-yymmddmmhhss
+app_name
+
+Fact
+- all repository is interface
+- almost all the repository only have one method
+- controller may call multi usecase via inport
+- service can be a simple function or an interface
+- All method in repository and service have a context in its first params
+
+ideally repository interface has only one method on it
+then in what condition an interface can have more than one method?
+- when the client of that interface guarantee will call one or more from all the method on it
+- sample : repository for transaction that have begin commit and rollback
+
+violation of interface method
+- when one of method is guarantee will never called
+
+benefit of simple interface
+- easy to mock and test simulation
+
+what is handled by entity
+- collection data as object
+- action related to that object only
+- use other entity
+- use value object
+
+what should you only call/do in interactor?
+- any method available in Outport (repository/service)
+- entity
+- value object
+- do the simple logic like looping condition checking
+
+what can you put in InportRequest?
+- simple builtin data type as field
+- we can also expose the func for advanced usage
+
+what can you put in InportResponse?
+- we can expose simple builtin data type (more recommended)
+- we can also expose our Entity or Value Object
+
+can we use entity as database structure?
+- i recommend not to use it to database structure
+- create the other structure in gateway is better but you must create a mapper for this
+
+i suggest not to create a wrapper function at the first attempt.
+wrapper function is created after refactoring
+
+i use a existing code as a schema
+    instead of creating a schema for your code generation,
+    why not just use the code it self (which follow the convention) as a schema
+    to generate the next code?
+
+what you can declare in Outport?
+- (mostly) repository
+- service
+- direct method
+
+how to decide whether to use service instead of direct method?
+- it is depend on the question "are we will sharing it to other usecase?"
+- if we think that we want to share the method to other usecase then put it to the service
+- otherwise put it as direct method in outport
+- we can promoted direct method to service if it is used by other usecase
+
+what is entity
+- mutable object that has an id
+- two entity is a same object if the id is similar even all of the field value is different
+- entity can be a aggregate for other entity
+- entity has its own factory method as constructor
+
+what is value object?
+- imutable object that all the field combination as an id
+- two value object is a same object if all of the field value is different
+- changing single value on any field will make it treated as different object
+
+why we need value object?
+- to objectify the value instead of using primitive datatype, for ex:
+- address has a street, number, city,
+- price has a amount, currency and must not negative (depend on bussiness process)
+
+what will handled by repository?
+- anything that related to data storage
+- Find, Save, Delete, or Update data
+- always passing the entity or primitve type
+- make sure not use a loot of parameter
+
+if you find a lot of parameter inf a function/method
+then it can be wrapped to the struct
+
+what is handled by service (when we use service?)
+- anything that is not related to data storage
+- anything that canot be handled by method entity
+- when it is hard to find to which Entity that behavior belongs
+- contains business invariants that are too complex to be stored in a single Entity or Value Object
+- generating id which used in interactor
+- publishing message to message broker
+- basically it is an interface. But it can be a function that has a repository and entity
+- does not hold any state
+
+how to naming the controller?
+- we are naming it by the actor who is accessing it
+- for example: mobileapi, userapi, restapi, backoffice, consumer, webhook
+
+how to naming the registry?
+- we are naming it by your application/service name
+- for ex: paymentservice, shippingservice, backofficeservice
+
+how to naming the gateway?
+- we are naming it by your enviroment
+- you can using different gateway if you want to make a simulation without changing the existing implementation
+- for ex: prod (for production), local (for local db), experimental, mockdb, inmemory
+
+how to naming the usecase?
+- use simple 2 or 3 word that describe the action
+
+there are two types of usecase
+- command (or called an action)
+- query (displaying information only without changing the data)
+
+who is using infrastructure?
+- controller: log, server, consumer, util, token
+- gateway: log, database, publisher, util, token, cache
+- registry: log,
+
+make sure to naming bool variable as positive word like :
+    isRunning instead of isNotRunning, isFound instead of isNotFound
+
+when to use panic?
+- when you first time initialize the system
+- never call it in runtime method because it is very bad practice
+
+any repository, service or method in entity at least always return the error
+any repository and service method must have context.Context in its first params
+
+You are not allowed to call util directly from entity or service
+
+we currently maintain the legacy code, can we use gogen to continue our project?
+The answer is no. But, you can use gogen to build a new partial system from your existing project
+in this way, step by step you can replace the old system with gogen structure
+
+service can include the repository
+
+avoid init method
+
+follow the rule even you are not understand yet
+
+what is benefit of using the repository/service interface instead of make your own method?
+- you can reuse the existing implementation without writing the new one
+
+what if you want to create your own implementation but still using existing repository/service interface?
+- you can create your own method on outport
+- or you can create your own implementation in gateway by create new gateway
+
+sample case:
+- upload image to Google Content Store
+
+We always start from
+- Data structure using class diagram database table
+- According to DDD
+
+
+Event storming
+    Policy
+        Whenever x then y
+        capture reactive logic to events
+        may executed by people or system
+
+    Command
+        Action happening in the system
+        present tense
+        can be a commands, actions, intentions, decisions
+
+    Read Model
+        The information/detail needed
+        as an output
+
+    System
+        receive a command, maybe one of following:
+            external system
+            internal system can't/don't want to maintain
+            different organization
+            logical component
+
+    Actor
+        Person/user/roles
+        The one who trigger the event
+
+    Hotspot
+        issue in the narrative
+        miscommunication between party
+        inconsistency / misunderstanding
+        friction
+        question
+        placeholder for not yet explored branch / case / scenario
+
+    Opportunity
+        sometimes what can be looked at as
+        a hot spot is actually a business opportunity
+
+    Domain Event
+        past tense
+        an event that is interesting for the business
+        relevant to domain expert
+
+    Aggregate
+        unit of transactional consistency
+        one or more domain object whos the state can change
+        but should always  be consistent as a whole
+
+In domain, (entity, vo, service, repository) we will never find dependency to usecase, gateway and controller (outside layer)
+entity never know about the technology it used.
+so you never mention a sql or json or gorm or something else here
+except you adopt external technology that wrapped in your code and never expose it directly
+
+In usecase you mostly mention about entity, vo, service, repository and domerror only
+even, no log found here
+
+in gateway and controller, you may mention about entity, vo,
+
+
+GOGEN Framework
+
+# The Background
+...
+
+# How to install
+
+* go install
+    compile, create a binary and install it into your system (you need setting path)
+    you can directly call it in terminal with 'gogen'
+
+* go build
+    just compile and create a binary in under gogen directory
+    you need to call it by './gogen'
+
+* GOOS=windows GOARCH=amd64 go build
+  GOOS=darwin  GOARCH=amd64 go build
+    cross compile for different os patform and create binary
+
+* if you use go build remember to put the binary into .gitignore
+    so it will not included in your git source code
+
+
+# The Concept
+
+* Clean Architecture
+  Usecase, Inport, Interactor, Outport
+  Controller
+  Gateway
+
+* Domain Driven Design
+  Domain
+  Entity
+  Value Object
+  Aggregate --> collection of Entity and Value Object
+  Repository
+  Service
+
+* My Own terminology
+  Application
+  Enum
+  Error
+  Log
+  Config
+
+When to decide to use repository or service
+use repository when you specifically accesing a data storage
+use service when you are using http call or run another action
+
+
+
+
+
+Todo List
+  Entity
+    Todo {
+      ID string
+      Message string
+      Created time.Time
+      Checked bool
+    }
+
+  Usecase
+    Create a Todo : command
+    Display All Todo : query
+    Check a Todo : command
+
+
+Usecase convention : we have two kind of usecase
+- command : create/update/delete  : Run
+- query   : getall/getone         : GetAll, GetOne
+
+
+Repository convention
+  SaveXXX
+  FindAllXXX
+  FindAllXXXByKeyword
+  FindOneXXXBySomething
+  DeleteXXX
+  UpdateXXX
+
+
+effort mostly in entity and usecase
+there is a rule that don't need to log in the usecase
+
+
+7 step in gogen
+
+1. create a domain : todocore
+
+2. create an entity : Todo
+
+3. create a usecase :
+    RunTodoCreate
+    RunTodoCheck
+    GetAllTodo
+
+4. define a Repository or a Service for each usecase
+    RunTodoCreate
+      x := NewTodo()
+      SaveTodo(x)
+
+    RunTodoCheck
+      x := FindOneTodoByID(TodoId)
+      x.Check()
+      SaveTodo(x)
+
+    GetAllTodo
+      x := FindAllTodo()
+      return x
+
+5. create a Gateway
+    SaveTodo() { ... }
+    FindOneTodoByID() { ... }
+    FindAllTodo { ... }
+
+6. Create a Controller
+    RunTodoCreate : POST /todo
+    RunTodoCheck  : PUT  /todo/:todoid
+    GetAllTodo    : GET  /todo
+
+7. Create an application : mytodo
+  Binding a controller + usecase + gateway
+
+
+
+* CRUD
+  "there is no CRUD, everything is a usecase"
+
+  Create  : command    : RunXXXCreate, OnXXXCreate
+  ReadOne : query      : GetOneXXX,    GetOneXXXByID
+  ReadAll : query      : GetAllXXX,    GetAllXXXChecked
+  Update  : command    : RunXXXUpdate, OnXXXUpdate
+  Delete  : command    : RunXXXDelete, OnXXXDelete
+
+
+
+
+
+
+pertanyaan
+- kenapa foldernya banyak banget?
+- kenapa file inport, outport dan interactor dipisah? kan bisa dalam satu file?
+- kenapa Inport cuman boleh punya satu method?
+- kenapa Inport Request dan Response dijadikan struct?
+- kenapa Interactor hanya boleh memiliki satu Outport?
+- kenapa test case ada didalam usecase ?
+- kenapa interactor struct private?
+- kenapa outport hanya mengextend repository atau service? apakah bisa dibuat method langsung?
+- kenapa ada folder infrastructure dan untuk apa?
+- kenapa gateway dipisah kedalam beberapa folder? untuk apa?
+- kenapa domain hanya berisi entity, service, repository dan vo? dimana bounded context nya?
+- kenapa controller dipisah dengan nama controller? untuk apa?
+- kenapa usecase dipisah dengan folder?
+- kenapa interactor, response, router dan handler dipisah dengan file berbeda?
+- kenapa tiap handler dipisah-pisah pada file yang berbeda?
+- kenapa error di sentralisasi? bagaimana cara kerja dan kelebihannya?
+- kenapa constant disentralisasi
+- kenapa log hanya muncul pada controller dan gateway? bagaimana dengan usecase dan entity?
+- kenapa ada registry dan untuk apakah registry tersebut?
+- kenapa satu registry bisa punya banyak controller?
+- apakah satu controller hanya boleh menghandle satu usecase saja?
+- kenapa gak pake file config ?
+- apa fungsi controller dan RegisterRouter method ? kenapa gak bikin constructor?
+- Why do you introduce new layout instead of the standart layout from https://github.com/golang-standards/project-layout ?
+
+context bisa dipasang timeout
+locking bisa dipasang di interactor
+
+GOOS=windows GOARCH=amd64 go build
+
+GOOS=darwin GOARCH=amd64 go build
+
+go test -cover ./domain_todocore/usecase/...
+
+
+
+-----
+
+# How to Install
+
+## Install to your system
+
+1. Obviously you need to install the golang in your system
+   make sure you can run golang by running
+```shell
+$ go
+```
+
+2. Git clone gogen from github to your local
+```shell
+$ git clone github.com/mirzaakhena/gogen
+```
+
+3. Install the gogen into your system by running
+
+```shell
+$ go install
+```
+It will compile, create a executable and install it into your system (you need setting path)
+
+4. try this command to call it via terminal
+```shell
+$ gogen
+```
+If you see
+```
+Try one of this command to learn how to use it
+  gogen service
+  gogen gateway
+  gogen controller
+  gogen web
+  gogen usecase
+  gogen application
+  gogen webapp
+  gogen enum
+  gogen repository
+  gogen error
+  gogen test
+  gogen valuestring
+  gogen valueobject
+  gogen crud
+  gogen openapi
+  gogen domain
+  gogen entity
+```
+
+Then gogen is ready to use
+
+But if you see
+```
+zsh: command not found: gogen
+```
+
+Means that you are not setting the go path correctly.
+
+---
+
+### Create an executable
+
+**This is an alternative way to have a gogen executable**
+Ideally gogen is installed in your system, you can use this method if you have difficulty to setting your path and you are in the 'rush' of using gogen
+
+You can also create a gogen executable with
+```shell
+$ go build
+```
+
+it will compile and create a executable file in under gogen directory.
+
+in mac or linux you may find one file named `gogen` in gogen repository
+or in windows it names `gogen.exe`
+
+
+Copy the built executable file and paste it to your project. Then you can call
+```shell
+$ ./gogen
+```
+
+mengaggregasi semua best practise
+
+---
+
+### Create a executable for cross platform
+Create for a windows
+```shell
+$ GOOS=windows GOARCH=amd64 go build
+```
+
+Create for a mac
+```shell
+$ GOOS=darwin  GOARCH=amd64 go build
+```
+
+Create for a linux
+```shell
+$ GOOS=linux  GOARCH=amd64 go build
+```
+
+
+If you create gogen executable manually, please remember to always to put the gogen executable into .gitignore so it will ignored in your git source code
+
+
+## Clean Architecture Concept
+The main purpose of this architecture is :
+* Separation concern between INFRASTRUCTURE part and LOGIC Part
+* Independent of Framework. Free to swap to any framework
+* Independent of UI. Free to swap UI. For ex: from Web UI to Console UI
+* Independent of Database. Free to swap to any database (data storage)
+* Independent of any external agency. Business rule doesn’t know anything about outside world
+* Testable. The business rules can be tested without the UI, Database, Web Server, or any other external element
+
+
+## How to use the gogen?
+You always start from creating an usecase, then you continue to create the gateway, then create the controller, and the last step is bind those three (usecase + gateway + controller) in application part. That's it.
+
+To create the usecase, you need to understand the concept of usecase according to Uncle Bob's Clean Architecture article. Usecase has 3 main part.
+* Input Port (Inport)
+* Interactor
+* Output Port (Outport)
+
+```
+Controller is using an Inport.
+Inport is implemented by Interactor
+Interactor is using an Outport
+Outport is implemented by Gateway
+```
+
+*Inport* is an interface that has only one method (named `Execute`) that will be called by *Controller*. The method in an interface define all the required (request and response) parameter to run the specific usecase. *Inport* will implemented by *Interactor*.
+
+*Interactor* is the place that you can define your business process flow by involving entity, valueobject, service and repository. When an usecase logic need a data, it will ask the *Outport* to provide it. *Interactor* also use *Outport* to send data, store data or do some action to other service. *Interactor* only have one *Outport* field. We must not adding new *Outport* field to *Interactor* to keep a simplicity and consistency.
+
+*Outport* is a data and action provider for *Interactor*. *Outport* never know how it is implemented. The implementor (in this case a *Gateway*) will decide how to provide a data or do an action. This *Outport* is very exclusive for specific usecase (in this case *Interactor*) and must not shared to other usecase. By having exclusive *Outport* it will isolate the testing for usecase.
+
+By organize this usecase in a such structure, we can easily change the *Controller*, or the *Gateway* in very flexible way without worry to change the logic part. This is how the logic and infrastructure separation is working.
+
+## Comparison with three layer architecture (Controller -> Service -> Repository) pattern
+* *Controller* is the same controller for both architecture.
+* *Service* is similar like *Interactor* with additional strict rule. *Service* allowed to have many repositories. In gogen Clean Architecture, *Interactor* only have one *Outport*.
+* *Service* have many method grouped by the domain. In Clean Architecture, we focus per usecase. One usecase for One Class to achieve *Single Responsibility Principle*.
+* In *Repository* you often see the CRUD pattern. Every developer can added new method if they think they need it. In reality this *Repository* is shared to different *Service* that may not use that method. In *Outport* you will strictly to adding method that guarantee used. Even adding new method or updating existing method will not interfere another usecase.
+* *Repository* is an *Outport* with *Gateway* as its implementation.
+
+## Gogen Convention
+* Usecase is first class citizen.
+* We always start the code from the usecase.
+* Usecase doesn't care about what the technology will be used
+* Usecase basically manage interaction between entity, value object, repository and service
+* As interface, inport has one and only one method which handle one usecase
+* Interactor is a manager for entity and outport
+* Interactor must not decide to have any technology. All technology is provided by Outport.
+* Outport is a servant for an interactor. It will provide any data from external source
+* As interface, Outport at least have one method and can have multiple method
+* All method in Outport is guarantee used by interactor
+* Inport and Outport must not shared to other usecase. They are exclusive for specific usecase
+* Interactor have one and only one outport. Mutiple outport is prohibited
+* Entity is mandatory to make a validation for any input. Controller optionaly handle the validation
+* Interactor is the one who made a decision mostly based on Entity consideration.
+* Entity must not produce unpredictible value like current time, or UUID value. Unpredictible value is provided by Inport or Outport (external Entity)
+* Since a log is technology, log only found in Controller and Gateway not in Interactor or Entity
+* To avoid a log polution, Log only printing the coming request, leaving response or error response
+* Error code can be produced by anyone and will printed in log
+* If somehow Gateway produce an error it may log the error, forward back the error,
+  forward back the error with new error message or all the possibility
+* Error code at least have messaged and code (imitate the http protocol response code)
+* Error enum must accessed by the developer and Error code can read by end user
+* Interactor and Entity is prioritized to be tested first rather than Controller and Gateway
+* Controller name can be an actor name who is using the system
+
+## Why you (will) need gogen?
+- we want to separate logic code and infrastructure code
+- save time because we think less for naming (one of "hardest" think in programming), conventions and structure
+- Increase readability, scream architecture
+- built for lazy developer
+- consistent structure
+- gogen is zero dependency. Your code will not have dependency to gogen at all
+- gogen is not engine it just a "well written code" so there is no performance issue
+- gogen is good templating tools, because deleting is easier than creating right
+- gogen support multiple application in one repo
+- gogen already implement trace id in every usecase Request
+- support lazy documentation. Your interactor is telling everything about how it's work. no need to work twice only to write/update doc
+- suitable for new project and revamp existing project per service
+- allow you to do code modification for experimental purpose without changing the current implementation
+- there is no automagically in gogen.
+
+
+Clean Architecture is a concept of "composing and organizing folder and code files in the very maintainable ways" which has the benefit of separating code logic and infrastructure very neatly so that it is easy to test, easy to mock and easy to switch between technologies with very few changes.
+
+This concept is agnostic against the technology. Means it does not depend on specific programming language.
+
+Some principles I apply are
+1. These tools should not be "know-it-all" tools. The programmer should still be the master of design. Because We don't want these tools to drive logic programmers instead. This tool only helps to guide to write standard code templates with clear names and conventions. The rest we still give the programmer space to work.
+2. This tool has several alternatives to choose the technology. So if the programmer has better technology or is more familiar, the programmer can easily replace it.
+3. I apply the Scream Architecture concept in it so that the generated code can speak for itself to the developers about what their role is and what they are doing (helping the learning process).
+
+
+## Benefit using Gogen
+1. These tools can become standard in a team. We love innovation and improvisation. However, if innovation and improvisation do not have a clear concept, it is feared that it will mislead the development process and complicate the process of changing or adding requirements in the future.
+2. Because it has become a standard, this tool help the communication process between developers QA, project manager, and product owner,
+3. Help the handover process and knowledge transfer with new programmers because it is easy to learn and imitated.
+4. Speed up the code review process and minimize code conflicts during code merges.
+5. The code generated results in a readable, simple structure with few directories and a minimum depth that has been calculated very carefully.
+6. Facilitate the creation of story cards. a standard structure will help shape the mindset of project managers when making stories. For example every member of developer team can have task per usecase.
+
+However, this is just a tools. The important things to remember is we must follow the basic principles of clean architecture itself. You may copy and paste the existing code if you think it is easier. But remember you have to be careful anytime you do that.
+
+The bigger the interface, the weaker the abstraction, Rob Pike
+
+
+Some of the concept you that may help leverage your knowledge in order to
+- Interface as Contract
+- Fat Interface
+- Interface Segregation Principle
+- Single Responsibility Principle
+- Dependency Inversion Principle
+- Rich Domain Model (instead of Anemic Domain Model)
+- Entity
+- Value Object
+- Enum
+- Error
+- Repository
+- Service
+- Use Case (Input Port, Interactor and Output Port)
+
+We know it's a lot, but it is worth to know.

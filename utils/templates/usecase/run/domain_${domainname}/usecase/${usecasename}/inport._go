@@ -1,0 +1,13 @@
+package {{LowerCase .UsecaseName}}
+
+import (
+    "{{.PackagePath}}/shared/lazygo"
+)
+
+type Inport = gogen.Inport[InportRequest, InportResponse]
+
+type InportRequest struct {
+}
+
+type InportResponse struct {
+}

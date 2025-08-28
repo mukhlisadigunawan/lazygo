@@ -1,0 +1,2 @@
+resource.DELETE("/{{LowerCase .Usecase.Name}}", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+//!

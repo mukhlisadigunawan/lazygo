@@ -1,0 +1,117 @@
+package logger
+
+import (
+	"context"
+	"fmt"
+
+	"{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/shared/lazygo"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+var Log *zap.Logger
+var Sugar *zap.SugaredLogger
+
+type Mode string
+
+const (
+	Development Mode = "development"
+	Production  Mode = "production"
+)
+
+func NewSimpleJSONLogger(appData lazygo.ApplicationData, cfg *config.Config) Logger {
+	// Initialize logger based on debug mode and logging level from config
+	loggingLevel := 0
+	if cfg.AppMode == "dev" {
+		InitLogger(loggingLevel, Development)
+		fmt.Println("Service RUN on DEBUG mode. Port: " + cfg.Servers[appData.AppName].Address)
+	} else {
+		loggingLevel = 1 // Set to Info level for production
+		InitLogger(loggingLevel, Production)
+	}
+
+	// Log service startup
+	Log.Info("Service starting...",
+		Any("port", cfg.Servers[appData.AppName].Address),
+		Any("mode", cfg.AppMode),
+		Any("logging_level", loggingLevel),
+	)
+	return &zapLogger{AppData: appData}
+}
+
+type zapLogger struct {
+	AppData lazygo.ApplicationData
+}
+
+func (l zapLogger) Info(ctx context.Context, message string, fields ...zap.Field) {
+	fields = append(fields, zap.String("trace_id", GetTraceID(ctx)))
+
+	Log.Info(message, fields...)
+}
+func (l zapLogger) Error(ctx context.Context, message string, Err error, fields ...zap.Field) {
+
+	fields = append(fields, zap.String("trace_id", GetTraceID(ctx)))
+	fields = append(fields, zap.Error(Err))
+	Log.Error(message, fields...)
+}
+func (l zapLogger) Debug(ctx context.Context, message string, fields ...zap.Field) {
+	fields = append(fields, zap.String("trace_id", GetTraceID(ctx)))
+	Log.Debug(message, fields...)
+}
+func (l zapLogger) Any(key string, value interface{}) zap.Field {
+	return zap.Any(key, value)
+}
+
+func InitLogger(loggingLevel int, mode Mode) *zap.Logger {
+	var config zap.Config
+
+	if mode == Development {
+		config = zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	} else {
+		config = zap.NewProductionConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
+	}
+	// Configure encoder
+	config.EncoderConfig.TimeKey = "time"
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
+	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+
+	// Set logging level
+	config.Level = zap.NewAtomicLevelAt(setLogLevelFromInt(loggingLevel))
+
+	// Create logger
+	var err error
+	Log, err = config.Build(zap.AddCaller(), zap.AddCallerSkip(1))
+	if err != nil {
+		panic("failed to initialize logger: " + err.Error())
+	}
+
+	return Log
+}
+
+func setLogLevelFromInt(levelInt int) zapcore.Level {
+	switch levelInt {
+	case 0:
+		return zapcore.DebugLevel
+	case 1:
+		return zapcore.InfoLevel
+	case 2:
+		return zapcore.WarnLevel
+	case 3:
+		return zapcore.ErrorLevel
+	case 4:
+		return zapcore.FatalLevel
+	case 5:
+		return zapcore.PanicLevel
+	default:
+		return zapcore.InfoLevel
+	}
+}
+
+func Any(key string, value interface{}) zap.Field {
+	return zap.Any(key, value)
+}

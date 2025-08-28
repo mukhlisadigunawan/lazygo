@@ -1,0 +1,48 @@
+package mongodb
+
+import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+// ExecuteInTransaction executes the given function within a transaction
+func (m *MongoDB) ExecuteInTransaction(ctx context.Context, fn func(sessCtx mongo.SessionContext) (interface{}, error)) (interface{}, error) {
+	session, err := m.Client.StartSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.EndSession(ctx)
+
+	return session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
+		return fn(sessCtx)
+	})
+}
+
+// ExecuteWithoutTransaction executes the given function without a transaction
+func (m *MongoDB) ExecuteWithoutTransaction(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error) {
+	return fn(ctx)
+}
+
+// ExecuteReportingQuery executes a query for reporting or slow-running processes using the hidden node
+func (m *MongoDB) ExecuteReportingQuery(ctx context.Context, fn func(ctx context.Context, db *mongo.Database) (interface{}, error)) (interface{}, error) {
+	// Use the HiddenClient to get the database
+	hiddenDB := m.HiddenClient.Database(m.config.Database.MongoDB.Database)
+
+	// Execute the query using the hidden database
+	result, err := fn(ctx, hiddenDB)
+	if err != nil {
+		// If there's an error, check if it's due to the hidden node being unavailable
+		if mongo.IsNetworkError(err) || mongo.IsTimeout(err) {
+			m.log.Error(ctx, "Hidden node unavailable, falling back to primary: %v", err)
+			// Fall back to primary using ExecuteWithoutTransaction
+			return m.ExecuteWithoutTransaction(ctx, func(ctx context.Context) (interface{}, error) {
+				return fn(ctx, m.Client.Database(m.config.Database.MongoDB.Database))
+			})
+		}
+		// If it's not a network error, return the original error
+		return nil, err
+	}
+
+	return result, nil
+}

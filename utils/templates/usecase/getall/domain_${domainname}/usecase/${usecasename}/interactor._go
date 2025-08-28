@@ -1,0 +1,27 @@
+package {{LowerCase .UsecaseName}}
+
+import (
+    "context"
+    "{{.PackagePath}}/shared/infrastructure/logger"
+)
+
+type {{CamelCase .UsecaseName}}Interactor struct {
+	outport Outport
+    log     logger.Logger
+}
+
+func NewUsecase(outputPort Outport, log logger.Logger) Inport {
+	return &{{CamelCase .UsecaseName}}Interactor{
+		outport: outputPort,
+        log:log,
+	}
+}
+
+func (r *{{CamelCase .UsecaseName}}Interactor) Execute(ctx context.Context, req InportRequest) (*InportResponse, error) {
+    res := &InportResponse{}
+
+    // code your usecase definition here ...
+    //!
+    r.log.Debug(ctx, "{{CamelCase .UsecaseName}} Execute", r.log.Any("request",req), r.log.Any("response",res))
+    return res, nil
+}

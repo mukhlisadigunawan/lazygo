@@ -1,0 +1,4 @@
+package {{LowerCase .UsecaseName}}
+
+type Outport interface {
+}

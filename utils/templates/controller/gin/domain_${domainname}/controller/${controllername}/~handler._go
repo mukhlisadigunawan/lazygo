@@ -1,0 +1,74 @@
+package {{LowerCase .ControllerName}}
+
+import (
+	"context"
+	"net/http"
+	"github.com/gin-gonic/gin"
+	"{{.PackagePath}}/domain_{{.DomainName}}/usecase/{{SnakeCase .Usecase.Name}}"
+	"{{.PackagePath}}/shared/lazygo"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+	"{{.PackagePath}}/shared/util"
+	"{{.PackagePath}}/shared/model/payload"
+)
+
+func (r *controller) {{CamelCase .Usecase.Name}}Handler() gin.HandlerFunc {
+
+    type InportRequest = {{LowerCase .Usecase.Name}}.InportRequest
+	type InportResponse = {{LowerCase .Usecase.Name}}.InportResponse
+
+    inport := lazygo.GetInport[InportRequest, InportResponse](r.GetUsecase(InportRequest{}))
+
+	type request struct {  {{range .Usecase.InportRequestFields}} {{if ne .Name "Now"}}
+        {{.Name}} {{.Type}} {{if EndWith (LowerCase $.Usecase.Name) "getall"}} `form:"{{SnakeCase .Name}},omitempty,default=0"` {{else}} `json:"{{SnakeCase .Name}}"` {{end}} {{end}} {{end}}
+	}
+
+	type response struct { {{range .Usecase.InportResponseFields}}
+		{{.Name}} {{.Type}} `json:"{{SnakeCase .Name}}"` {{end}}
+	}
+
+	return func(c *gin.Context) {
+
+		traceID := util.GenerateID(16)
+
+		ctx := logger.SetTraceID(context.Background(), traceID)
+
+		var jsonReq request
+		{{- if or (EndWith (LowerCase .Usecase.Name) "getall") (EndWith (LowerCase .Usecase.Name) "getone") }}
+			err := c.ShouldBindQuery(&jsonReq)
+		{{- else }}
+			err := c.ShouldBindJSON(&jsonReq)
+		{{- end }}
+
+		if  err != nil {
+			r.log.Error(ctx, "{{CamelCase .Usecase.Name}}Handler Error Binding",err)
+			c.JSON(http.StatusBadRequest, payload.NewErrorResponse(err, traceID))
+			return
+		}
+
+		var req InportRequest {{range .Usecase.InportRequestFields}}{{if eq .Name "Now"}}
+		req.Now = time.Now(){{ else }}
+		req.{{.Name}} = jsonReq.{{.Name}}{{ end }}{{ end }}
+
+		
+		r.log.Info(ctx, "{{CamelCase .Usecase.Name}}Handler Request",r.log.Any("request",req))
+
+		res, err := inport.Execute(ctx, req)
+		if err != nil {
+			r.log.Error(ctx, "{{CamelCase .Usecase.Name}}Handler Error Execute",err)
+			c.JSON(http.StatusBadRequest, payload.NewErrorResponse(err, traceID))
+			return
+		}
+
+		var jsonRes response 
+		{{ if eq (len .Usecase.InportResponseFields) 0 }}
+			_ = res
+		{{ else }} 
+			util.Automapper(res, &jsonRes)
+		{{ end }}
+		
+		r.log.Info(ctx, "{{CamelCase .Usecase.Name}}Handler Response",r.log.Any("response",jsonRes))
+		r.log.Info(ctx, util.MustJSON(jsonRes))
+		c.JSON(http.StatusOK, payload.NewSuccessResponse(jsonRes, traceID))
+
+	}
+}

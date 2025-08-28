@@ -1,0 +1,36 @@
+package logger
+
+import (
+	"context"
+
+	"go.uber.org/zap"
+)
+
+type Logger interface {
+	Info(ctx context.Context, message string, fields ...zap.Field)
+	Error(ctx context.Context, message string, Err error, fields ...zap.Field)
+	Debug(ctx context.Context, message string, fields ...zap.Field)
+	Any(key string, value interface{}) zap.Field
+}
+
+type traceDataType int
+
+const traceDataKey traceDataType = 1
+
+func SetTraceID(ctx context.Context, traceID string) context.Context {
+	return context.WithValue(ctx, traceDataKey, traceID)
+}
+
+func GetTraceID(ctx context.Context) string {
+
+	// default traceID
+	traceID := "0000000000000000"
+
+	if ctx != nil {
+		if v := ctx.Value(traceDataKey); v != nil {
+			traceID = v.(string)
+		}
+	}
+
+	return traceID
+}

@@ -1,0 +1,109 @@
+package util
+
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+)
+
+func StructIsNil(i any) bool {
+	if i == nil {
+		return true
+	}
+	v := reflect.ValueOf(i)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return v.IsNil()
+	}
+	return false
+}
+
+var translator ut.Translator
+var uni *ut.UniversalTranslator
+
+func init() {
+	en := en.New()
+	uni = ut.New(en, en)
+	translator, _ = uni.GetTranslator("en")
+
+}
+
+func ValidateErrToMapString(err error) map[string]string {
+	fmt.Println("err: ", err)
+
+	validationErrors, ok := err.(validator.ValidationErrors)
+	if !ok {
+		return map[string]string{
+			"error": err.Error(),
+		}
+	}
+	errorResponse := map[string]string{}
+	errorTranslation := validationErrors.Translate(translator)
+	for _, err := range validationErrors {
+		errKey := SnakeCase(err.StructField())
+		errorResponse[errKey] = errorTranslation[err.Namespace()]
+		// errorResponse[errKey] = err.Type().Name()
+
+	}
+	return errorResponse
+}
+
+func StructToMapString(s any) map[string]string {
+	m := make(map[string]string)
+	v := reflect.ValueOf(s)
+
+	// kalau pointer, ambil Elem()
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		key := t.Field(i).Tag.Get("json") // pakai tag JSON
+		if key == "" {
+			key = t.Field(i).Name
+		}
+		m[key] = fmt.Sprintf("%v", v.Field(i).Interface())
+	}
+	return m
+}
+
+func GetJSONKeyByValue(s any, value string) (string, bool) {
+	val := reflect.ValueOf(s)
+	typ := val.Type()
+
+	if typ.Kind() != reflect.Struct {
+		return "", false
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		fieldValue := val.Field(i).String()
+		field := typ.Field(i)
+		jsonTag := field.Tag.Get("json")
+
+		if fieldValue == value {
+			if jsonTag != "" {
+				// jika ada tag json, return tag
+				return jsonTag, true
+			}
+			// jika tidak ada tag, return field name
+			return field.Name, true
+		}
+	}
+
+	return "", false
+}
+
+func Automapper(objOrigin interface{}, objDestination interface{}) error {
+	var (
+		err error
+	)
+	jsonOrigin := MustJSON(objOrigin)
+	err = json.Unmarshal([]byte(jsonOrigin), &objDestination)
+
+	return err
+}

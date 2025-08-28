@@ -1,0 +1,10 @@
+
+{{CamelCase .EntityName}}Objs, count, err := r.outport.{{PascalCase .RepositoryName}}(ctx, req.Page, req.Size, "{{CamelCase .EntityName}}ID")
+if err != nil {
+    return nil, err
+}
+
+res.Count = count
+res.Items = util.ToSliceAny({{CamelCase .EntityName}}Objs)
+
+//!

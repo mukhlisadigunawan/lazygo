@@ -1,0 +1,65 @@
+package config
+
+type Config struct {
+	Servers       map[string]Server `json:"servers"`
+	JWTSecretKey  string            `json:"jwt_secret_key"`
+	MessageBroker MessageBroker     `json:"message_broker"`
+	Database      Database          `json:"database"`
+	AppMode       string            `json:"app_mode"`
+}
+type Server struct {
+	Address string `json:"address,omitempty"`
+}
+
+type Database struct {
+	MongoDB MongoDB `json:"mongodb_shipment,omitempty"`
+	MySQL   MySQL   `json:"mysql_paxel_incentive,omitempty"`
+}
+
+type MongoDB struct {
+	Database   string   `json:"database"`
+	Host       []string `json:"host"`
+	Username   string   `json:"username"`
+	Password   string   `json:"password"`
+	ReplicaSet string   `json:"replica_set"`
+	SSL        bool     `json:"ssl"`
+}
+type MySQL struct {
+	Host                    string `json:"host,omitempty"`
+	Database                string `json:"database,omitempty"`
+	User                    string `json:"user,omitempty"`
+	Password                string `json:"password,omitempty"`
+	Port                    int    `json:"port,omitempty"`
+	MaxOpenConns            int    `json:"max_open_conns,omitempty"`
+	MaxIdleConns            int    `json:"max_idle_conns,omitempty"`
+	ConnMaxLifetime         int    `json:"conn_max_lifetime,omitempty"`
+	ConnMaxIdleTime         int    `json:"conn_max_idle_time,omitempty"`
+	QueryLogLevel           int    `json:"query_log_level,omitempty"`
+	MonitorConnPool         bool   `json:"monitor_conn_pool,omitempty"`
+	MonitorConnPoolInterval int    `json:"monitor_conn_pool_interval,omitempty"`
+}
+
+type MessageBroker struct {
+	RabbitMQ RabbitMQ   `json:"rabbitmq"`
+	Config   AMQPConfig `json:"amqp_config"`
+}
+
+type RabbitMQ struct {
+	Address  string `json:"address"`
+	Port     int    `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AMQPConfig struct {
+	ExchangeName string `json:"exchange_name"`
+	ExchangeType string `json:"exchange_type"`
+	Durable      bool   `json:"durable"`
+	AutoDelete   bool   `json:"auto_delete"`
+	Internal     bool   `json:"internal"`
+	NoWait       bool   `json:"no_wait"`
+	Queue        Queue  `json:"queue"`
+}
+type Queue struct {
+	RoutingKey string `json:"queue_name"`
+}
