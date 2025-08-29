@@ -1,4 +1,4 @@
-module lazygo
+module github.com/mukhlisadigunawan/lazygo
 
 go 1.24.1
 

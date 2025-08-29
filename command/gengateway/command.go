@@ -2,8 +2,9 @@ package gengateway
 
 import (
 	"fmt"
-	"lazygo/utils"
 	"os"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

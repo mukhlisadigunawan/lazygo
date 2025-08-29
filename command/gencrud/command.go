@@ -2,8 +2,9 @@ package gencrud
 
 import (
 	"fmt"
-	"lazygo/command/gengateway"
-	"lazygo/utils"
+
+	"github.com/mukhlisadigunawan/lazygo/command/gengateway"
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

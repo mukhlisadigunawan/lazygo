@@ -5,9 +5,10 @@ import (
 	"go/ast"
 	"go/printer"
 	"go/token"
-	"lazygo/command/genentity"
-	"lazygo/utils"
 	"os"
+
+	"github.com/mukhlisadigunawan/lazygo/command/genentity"
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

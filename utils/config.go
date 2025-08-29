@@ -4,10 +4,11 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mukhlisadigunawan/lazygo/utils/model"
+
 	"os"
 	"strings"
-
-	"lazygo/utils/model"
 )
 
 func CreateGogenConfig(err error, domainName string) error {

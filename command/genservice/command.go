@@ -5,8 +5,9 @@ import (
 	"go/ast"
 	"go/printer"
 	"go/token"
-	"lazygo/utils"
 	"os"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

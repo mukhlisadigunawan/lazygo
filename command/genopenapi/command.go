@@ -3,8 +3,9 @@ package genopenapi
 import (
 	"encoding/json"
 	"fmt"
-	"lazygo/utils"
 	"os"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

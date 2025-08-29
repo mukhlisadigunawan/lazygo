@@ -3,7 +3,8 @@ package generror
 import (
 	"fmt"
 	"go/token"
-	"lazygo/utils"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

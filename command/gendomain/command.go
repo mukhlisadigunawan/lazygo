@@ -2,9 +2,10 @@ package gendomain
 
 import (
 	"fmt"
-	"lazygo/utils"
 	"math/rand"
 	"time"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

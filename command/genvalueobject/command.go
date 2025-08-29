@@ -2,7 +2,8 @@ package genvalueobject
 
 import (
 	"fmt"
-	"lazygo/utils"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...

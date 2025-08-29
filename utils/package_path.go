@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"lazygo/utils/model"
 	"os"
 	"strings"
+
+	"github.com/mukhlisadigunawan/lazygo/utils/model"
 )
 
 // GetPackageName ...

@@ -2,8 +2,9 @@ package genusecase
 
 import (
 	"fmt"
-	"lazygo/utils"
 	"strings"
+
+	"github.com/mukhlisadigunawan/lazygo/utils"
 )
 
 // ObjTemplate ...
