@@ -88,3 +88,16 @@ func HasOneOfThisPrefix(s string, str ...string) bool {
 	}
 	return false
 }
+
+func TrimUseCase(usecase string) string {
+	suffixes := []string{"Create", "Delete", "GetOne", "GetAll", "Update"}
+
+	for _, s := range suffixes {
+		if strings.HasSuffix(usecase, s) {
+			usecase = strings.TrimSuffix(usecase, s)
+			break
+		}
+	}
+
+	return usecase
+}

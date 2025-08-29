@@ -12,4 +12,5 @@ var FuncMap = template.FuncMap{
 	"SpaceCase":       SpaceCase,
 	"StartWith":       StartWith,
 	"EndWith":         EndWith,
+	"TrimUseCase":     TrimUseCase,
 }

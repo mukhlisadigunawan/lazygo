@@ -1,2 +1,2 @@
-resource.PATCH("/{{LowerCase .Usecase.Name}}", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+resource.PATCH("/{{TrimUseCase .Usecase.Name}}s/:id", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
 //!

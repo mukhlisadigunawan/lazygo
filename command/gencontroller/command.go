@@ -127,7 +127,7 @@ func Run(inputs ...string) error {
 			//	return err
 			//}
 
-			filename := fmt.Sprintf("domain_%s/controller/%s/handler_%s.go", gcfg.Domain, utils.LowerCase(controllerName), utils.SnakeCase(usecase.Name))
+			filename := fmt.Sprintf("domain_%s/controller/%s/%s_handler.go", gcfg.Domain, utils.LowerCase(controllerName), utils.SnakeCase(usecase.Name))
 
 			_, err = utils.WriteFileIfNotExist(string(templateCode), filename, singleObj)
 			if err != nil {
