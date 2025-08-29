@@ -1,2 +1,2 @@
-resource.PUT("/{{LowerCase .Usecase.Name}}", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+resource.PUT("/{{TrimUseCase .Usecase.Name}}s/:id", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
 //!
