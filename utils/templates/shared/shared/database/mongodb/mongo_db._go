@@ -1,0 +1,164 @@
+package mongodb
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+
+	"{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+)
+
+type MongoDB struct {
+	Client       *mongo.Client
+	HiddenClient *mongo.Client
+	log          logger.Logger
+	config       *config.Config
+}
+
+type Session struct {
+}
+
+var (
+	instance *MongoDB
+	once     sync.Once
+)
+
+func NewMongoDB(cfg *config.Config, log logger.Logger) (*MongoDB, error) {
+	var err error
+	once.Do(func() {
+		instance, err = initMongoDB(cfg, log)
+	})
+	return instance, err
+}
+
+func initMongoDB(cfg *config.Config, log logger.Logger) (*MongoDB, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	dbHost := strings.Join(cfg.Database.MongoDBShipment.Host, ",")
+	var connStr strings.Builder
+	connStr.WriteString("mongodb://")
+
+	if cfg.Database.MongoDBShipment.Username != "" && cfg.Database.MongoDBShipment.Password != "" {
+		connStr.WriteString(fmt.Sprintf("%s:%s@%s", cfg.Database.MongoDBShipment.Username, cfg.Database.MongoDBShipment.Password, dbHost))
+	} else {
+		connStr.WriteString(dbHost)
+	}
+
+	// &readPreference=SecondaryPreferred
+	connStr.WriteString("/?authSource=admin")
+
+	if cfg.Database.MongoDBShipment.SSL {
+		connStr.WriteString("&ssl=true")
+	}
+
+	if cfg.Database.MongoDBShipment.ReplicaSet != "" {
+		connStr.WriteString("&replicaSet=" + cfg.Database.MongoDBShipment.ReplicaSet)
+	}
+
+	uri := connStr.String()
+	if cfg.Database.MongoDBShipment.Username != "" && cfg.Database.MongoDBShipment.Password != "" {
+		maskedURL := strings.Replace(uri, cfg.Database.MongoDBShipment.Username, "username", 1)
+		maskedURL = strings.Replace(maskedURL, cfg.Database.MongoDBShipment.Password, "password", 1)
+		log.Info(context.Background(), "MongoDb Init", log.Any("uri", maskedURL))
+		// fmt.Printf("\n>>>>>>> MongoDB URI : %s\n\n", maskedURL)
+	}
+
+	clientOptions := options.Client().
+		ApplyURI(uri).
+		SetMaxPoolSize(100).
+		SetMinPoolSize(10).
+		SetMaxConnIdleTime(30 * time.Second).
+		SetServerSelectionTimeout(30 * time.Second).
+		SetConnectTimeout(30 * time.Second)
+
+	// Only set ReplicaSet option if it's specified in the config
+	if cfg.Database.MongoDBShipment.ReplicaSet != "" {
+		clientOptions.ApplyURI(uri + cfg.Database.MongoDBShipment.ReplicaSet) // add replica set
+		clientOptions.SetReplicaSet(cfg.Database.MongoDBShipment.ReplicaSet)
+	}
+
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		log.Error(ctx, "Failed to connect to MongoDB", err)
+		return nil, err
+	}
+
+	// ping for check mongodb connection
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		log.Error(ctx, "Failed to ping MongoDB", err)
+		return nil, err
+	}
+
+	log.Info(ctx, "MongoDb Init", log.Any("context", "Success Connected MongoDB"))
+
+	// Initialize hiddenClient only if using a replica set
+	var hiddenClient *mongo.Client
+	if cfg.Database.MongoDBShipment.ReplicaSet != "" {
+		hiddenClientOptions := options.Client().
+			ApplyURI(uri).
+			SetMaxPoolSize(50).
+			SetMinPoolSize(5).
+			SetMaxConnIdleTime(30 * time.Second).
+			SetServerSelectionTimeout(30 * time.Second).
+			SetConnectTimeout(30 * time.Second).
+			SetReplicaSet(cfg.Database.MongoDBShipment.ReplicaSet).
+			SetReadPreference(readpref.SecondaryPreferred())
+
+		hiddenClient, err = mongo.Connect(ctx, hiddenClientOptions)
+		if err != nil {
+			log.Error(ctx, "Failed to connect to MongoDB hidden node", err)
+			return nil, err
+		}
+
+		if err := hiddenClient.Ping(ctx, readpref.SecondaryPreferred()); err != nil {
+			log.Error(ctx, "Failed to ping MongoDB hidden node", err)
+			return nil, err
+		}
+
+		log.Info(ctx, "Successfully connected to MongoDB hidden node")
+	}
+	mongodb := &MongoDB{
+		Client:       client,
+		HiddenClient: hiddenClient,
+		log:          log,
+		config:       cfg,
+	}
+	return mongodb, nil
+}
+
+func (m *MongoDB) Close() {
+	if m.Client != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := m.Client.Disconnect(ctx); err != nil {
+			m.log.Error(ctx, "Failed to disconnect from MongoDB: %v", err)
+		}
+	}
+	if m.HiddenClient != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := m.HiddenClient.Disconnect(ctx); err != nil {
+			m.log.Error(ctx, "Failed to disconnect from MongoDB hidden node: %v", err)
+		}
+	}
+}
+
+// GetCollection returns a collection for non-transactional operations
+func (m *MongoDB) GetCollection(name string) *mongo.Collection {
+	return m.Client.Database(m.config.Database.MongoDBShipment.Database).Collection(name)
+}
+
+// GetHiddenCollection returns a collection for reporting and slow-running processes
+func (m *MongoDB) GetHiddenCollection(name string) *mongo.Collection {
+	if m.HiddenClient != nil {
+		return m.HiddenClient.Database(m.config.Database.MongoDBShipment.Database).Collection(name)
+	}
+	return m.Client.Database(m.config.Database.MongoDBShipment.Database).Collection(name)
+}

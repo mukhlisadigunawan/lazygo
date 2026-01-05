@@ -20,8 +20,8 @@ func Run(inputs ...string) error {
 
 	if len(inputs) < 1 {
 		err := fmt.Errorf("\n" +
-			"   # Create a new usecase\n" +
-			"   gogen crud Product\n" +
+			"   # Create a new crud\n" +
+			"   lazygo crud Product\n" +
 			"     'Product' is an existing entity name\n" +
 			"\n")
 
@@ -29,7 +29,7 @@ func Run(inputs ...string) error {
 	}
 
 	gcfg := utils.GetGogenConfig()
-
+	driverName := "gin"
 	entityName := inputs[0]
 
 	obj := &ObjTemplate{
@@ -50,7 +50,7 @@ func Run(inputs ...string) error {
 
 	// TODO check existing entity. if exist, read all the field else create new one
 
-	err = utils.CreateEverythingExactly2(".gogen/templates/crud/", gcfg.Crud, fileRenamer, obj)
+	err = utils.CreateEverythingExactly2(".gogen/templates/crud/", driverName, fileRenamer, obj)
 	if err != nil {
 		return err
 	}

@@ -67,7 +67,6 @@ func (r *controller) {{CamelCase .Usecase.Name}}Handler() gin.HandlerFunc {
 		{{ end }}
 		
 		r.log.Info(ctx, "{{CamelCase .Usecase.Name}}Handler Response",r.log.Any("response",jsonRes))
-		r.log.Info(ctx, util.MustJSON(jsonRes))
 		c.JSON(http.StatusOK, payload.NewSuccessResponse(jsonRes, traceID))
 
 	}

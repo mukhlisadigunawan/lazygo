@@ -1,2 +1,2 @@
-resource.Get("/{{LowerCase .Usecase.Name}}", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+{{- if EndWith .Usecase.Name "GetAll" }}resource.Get("/{{TrimUseCase .Usecase.Name}}s", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler()){{- else if or (EndWith .Usecase.Name "GetOne")}}resource.Get("/{{TrimUseCase .Usecase.Name}}s/:id", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler()){{- end }}
 //!

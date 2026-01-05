@@ -3,7 +3,7 @@ package {{LowerCase .ControllerName}}
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"{{.PackagePath}}/domain_{{.DomainName}}/usecase/{{LowerCase .Usecase.Name}}"
+	"{{.PackagePath}}/domain_{{.DomainName}}/usecase/{{SnakeCase .Usecase.Name}}"
 	"{{.PackagePath}}/shared/lazygo"
 	"{{.PackagePath}}/shared/infrastructure/logger"
 	"{{.PackagePath}}/shared/util"
@@ -15,10 +15,10 @@ func (r *controller) {{CamelCase .Usecase.Name}}Handler() fiber.Handler {
     type InportRequest = {{LowerCase .Usecase.Name}}.InportRequest
 	type InportResponse = {{LowerCase .Usecase.Name}}.InportResponse
 
-    inport := gogen.GetInport[InportRequest, InportResponse](r.GetUsecase(InportRequest{}))
+    inport := lazygo.GetInport[InportRequest, InportResponse](r.GetUsecase(InportRequest{}))
 
 	type request struct {  {{range .Usecase.InportRequestFields}} {{if ne .Name "Now"}}
-        {{.Name}} {{.Type}} {{if StartWith (LowerCase $.Usecase.Name) "get"}} `form:"{{SnakeCase .Name}},omitempty,default=0"` {{else}} `json:"{{SnakeCase .Name}}"` {{end}} {{end}} {{end}}
+        {{.Name}} {{.Type}} {{if EndWith (LowerCase $.Usecase.Name) "getall"}} `form:"{{SnakeCase .Name}},omitempty,default=0"` {{else}} `json:"{{SnakeCase .Name}}"` {{end}} {{end}} {{end}}
 	}
 
 	type response struct { {{range .Usecase.InportResponseFields}}
@@ -35,7 +35,7 @@ func (r *controller) {{CamelCase .Usecase.Name}}Handler() fiber.Handler {
 		err := c.BodyParser(&jsonReq) {{else}}
 		err := c.BodyParser(&jsonReq) {{end}}
 		if  err != nil {
-			r.log.Error(ctx, err.Error())
+			r.log.Error(ctx, "{{CamelCase .Usecase.Name}}Handler Error Binding",err)
 			_ = c.Status(fiber.StatusBadRequest).JSON(payload.NewErrorResponse(err, traceID))
 			return err
 		}
@@ -44,11 +44,11 @@ func (r *controller) {{CamelCase .Usecase.Name}}Handler() fiber.Handler {
 		req.Now = time.Now(){{ else }}
 		req.{{.Name}} = jsonReq.{{.Name}}{{ end }}{{ end }}
 
-		r.log.Info(ctx, util.MustJSON(req))
+		r.log.Info(ctx, "{{CamelCase .Usecase.Name}}Handler Request",r.log.Any("request",req))
 
 		res, err := inport.Execute(ctx, req)
 		if err != nil {
-			r.log.Error(ctx, err.Error())
+			r.log.Error(ctx, "{{CamelCase .Usecase.Name}}Handler Error Execute",err)
 			_ = c.Status(fiber.StatusBadRequest).JSON(payload.NewErrorResponse(err, traceID))
 			return err
 		}
@@ -57,7 +57,7 @@ func (r *controller) {{CamelCase .Usecase.Name}}Handler() fiber.Handler {
         _ = res {{else}} {{range .Usecase.InportResponseFields}}
         jsonRes.{{.Name}} = res.{{.Name}}{{ end }} {{ end }}
 
-		r.log.Info(ctx, util.MustJSON(jsonRes))
+		r.log.Info(ctx, "{{CamelCase .Usecase.Name}}Handler Response",r.log.Any("response",jsonRes))
 		return c.JSON(payload.NewSuccessResponse(jsonRes, traceID))
 	}
 }

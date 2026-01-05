@@ -1,2 +1,2 @@
-resource.Post("/{{LowerCase .Usecase.Name}}", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+resource.Post("/{{TrimUseCase .Usecase.Name}}s", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
 //!

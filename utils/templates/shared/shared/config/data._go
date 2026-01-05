@@ -12,8 +12,8 @@ type Server struct {
 }
 
 type Database struct {
-	MongoDB MongoDB `json:"mongodb_shipment,omitempty"`
-	MySQL   MySQL   `json:"mysql_paxel_incentive,omitempty"`
+	MongoDB MongoDB `json:"mongodb,omitempty"`
+	MySQL   MySQL   `json:"mysqldb,omitempty"`
 }
 
 type MongoDB struct {

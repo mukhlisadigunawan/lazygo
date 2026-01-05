@@ -1,0 +1,130 @@
+package mysql
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
+)
+
+type Mysql struct {
+	cfg *config.Config
+	log logger.Logger
+	db  *gorm.DB
+}
+
+// NewMySQL langsung connect + goroutine auto reconnect
+func NewMySQL(cfg *config.Config, log logger.Logger) *Mysql {
+	m := &Mysql{cfg: cfg, log: log}
+	if err := m.connect(); err != nil {
+		log.Error(context.Background(), "Failed initial MySQL connect", err)
+		panic(err)
+	}
+
+	// Auto reconnect goroutine
+	go m.autoReconnect()
+
+	return m
+}
+
+func (m *Mysql) connect() error {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		m.cfg.Database.MySQL.User,
+		m.cfg.Database.MySQL.Password,
+		m.cfg.Database.MySQL.Host,
+		m.cfg.Database.MySQL.Port,
+		m.cfg.Database.MySQL.Database,
+	)
+
+	var gormLogger gormlogger.Interface
+	if m.cfg.AppMode == "dev" {
+		gormLogger = gormlogger.Default.LogMode(gormlogger.Info)
+	} else {
+		gormLogger = gormlogger.Default.LogMode(gormlogger.Silent)
+	}
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: gormLogger,
+	})
+	if err != nil {
+		return err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+
+	sqlDB.SetMaxOpenConns(m.cfg.Database.MySQL.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(m.cfg.Database.MySQL.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(m.cfg.Database.MySQL.ConnMaxLifetime) * time.Second)
+	sqlDB.SetConnMaxIdleTime(time.Duration(m.cfg.Database.MySQL.ConnMaxIdleTime) * time.Second)
+
+	m.db = db
+
+	m.log.Info(context.Background(), "MySQL connected",
+		m.log.Any("host", m.cfg.Database.MySQL.Host),
+		m.log.Any("db", m.cfg.Database.MySQL.Database),
+	)
+
+	return nil
+}
+
+func (m *Mysql) reconnect() error {
+	if m.db != nil {
+		sqlDB, _ := m.db.DB()
+		_ = sqlDB.Close()
+		m.db = nil
+	}
+	m.log.Info(context.Background(), "MySQL reconnecting...")
+	return m.connect()
+}
+
+func (m *Mysql) autoReconnect() {
+	ticker := time.NewTicker(30 * time.Second) // interval bisa dari config juga
+	defer ticker.Stop()
+
+	for range ticker.C {
+		if m.db == nil {
+			_ = m.reconnect()
+			continue
+		}
+		sqlDB, err := m.db.DB()
+		if err != nil || sqlDB.Ping() != nil {
+			_ = m.reconnect()
+		}
+	}
+}
+
+// WithoutTransaction executes query without transaction
+func (m *Mysql) WithoutTransaction(ctx context.Context, fn func(db *gorm.DB) *gorm.DB) (*gorm.DB, error) {
+	if m.db == nil {
+		if err := m.connect(); err != nil {
+			return nil, err
+		}
+	}
+	dbRes := fn(m.db.WithContext(ctx))
+	return dbRes, dbRes.Error
+}
+
+// WithTransaction executes queries in a transaction
+func (m *Mysql) WithTransaction(ctx context.Context, fn func(tx *gorm.DB) *gorm.DB) (*gorm.DB, error) {
+	if m.db == nil {
+		if err := m.connect(); err != nil {
+			return nil, err
+		}
+	}
+
+	var dbRes *gorm.DB
+	err := m.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		dbRes = fn(tx)
+		return dbRes.Error
+	})
+	return dbRes, err
+}

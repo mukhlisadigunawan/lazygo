@@ -3,10 +3,11 @@ package {{LowerCase .ControllerName}}
 
 import (
 	"{{.PackagePath}}/shared/config"
-	"{{.PackagePath}}/shared/gogen"
+	"{{.PackagePath}}/shared/lazygo"
 	"{{.PackagePath}}/shared/infrastructure/logger"
 	"{{.PackagePath}}/shared/infrastructure/token"
-	"{{.PackagePath}}/shared/protogrpc"
+	"{{.PackagePath}}/shared/model/stub"
+	"syscall"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -14,20 +15,22 @@ import (
 //go:generate protoc -I . --go-grpc_out=../../../. --go_out=../../../. ./product.proto
 
 type controller struct {
-	protogrpc.UnimplementedProductControllerServer
-	gogen.UsecaseRegisterer
+	ApplicationData lazygo.ApplicationData
+	stub.UnimplementedServer
+	lazygo.UsecaseRegisterer
 	server   *grpc.Server
 	log      logger.Logger
 	cfg      *config.Config
 	jwtToken token.JWTToken
 }
 
-func NewController(appData gogen.ApplicationData, log logger.Logger, cfg *config.Config, jwtToken token.JWTToken) gogen.ControllerRegisterer {
+func NewController(appData lazygo.ApplicationData, log logger.Logger, cfg *config.Config, jwtToken token.JWTToken) lazygo.ControllerRegisterer {
 
 	server := grpc.NewServer()
 
 	return &controller{
-		UsecaseRegisterer: gogen.NewBaseController(),
+		ApplicationData: appData,
+		UsecaseRegisterer: lazygo.NewBaseController(),
 		server:            server,
 		log:               log,
 		cfg:               cfg,
@@ -37,18 +40,28 @@ func NewController(appData gogen.ApplicationData, log logger.Logger, cfg *config
 }
 
 func (r *controller) RegisterRouter() {
-	protogrpc.RegisterProductControllerServer(r.server, r)
+	stub.RegisterServer(r.server, r)
 }
 
 func (r *controller) Start() {
-
+	addr := ":9000"
 	listen, err := net.Listen("tcp", ":9000")
 	if err != nil {
 		panic(err)
 	}
 
-	err = r.server.Serve(listen)
-	if err != nil {
-		panic(err)
-	}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		r.log.Info(context.Background(), "Server Running", r.log.Any("address", addr))
+		if err := r.server.Serve(listen); err != nil {
+			r.log.Error(context.Background(), "failed to serve:", err)
+		}
+	}()
+
+	<-sigChan
+	r.log.Info(context.Background(), "Shutting down gRPC server gracefully...")
+	r.server.GracefulStop()
 }
+

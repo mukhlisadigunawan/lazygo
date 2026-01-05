@@ -1,0 +1,2 @@
+resource.Put("/{{TrimUseCase .Usecase.Name}}s/:id", r.authorization(), r.{{CamelCase .Usecase.Name}}Handler())
+//!

@@ -1,0 +1,110 @@
+package amqpclient
+
+import (
+	"context"
+	"fmt"
+
+	"sync"
+	"time"
+
+	"{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+
+	"github.com/rabbitmq/amqp091-go"
+)
+
+type AMQPManager struct {
+	config   *config.Config
+	log      logger.Logger
+	conn     *amqp091.Connection
+	connLock sync.Mutex
+}
+
+func NewAMQPManager(log logger.Logger, cfg *config.Config) *AMQPManager {
+	manager := &AMQPManager{
+		config: cfg,
+		log:    log,
+	}
+	manager.connect()
+	go manager.reconnectLoop()
+	return manager
+}
+
+func (m *AMQPManager) connect() error {
+	m.connLock.Lock()
+	defer m.connLock.Unlock()
+
+	if m.conn != nil {
+		return nil
+	}
+	uri := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
+		m.config.MessageBroker.RabbitMQ.Username,
+		m.config.MessageBroker.RabbitMQ.Password,
+		m.config.MessageBroker.RabbitMQ.Address,
+		m.config.MessageBroker.RabbitMQ.Port,
+		m.config.MessageBroker.RabbitMQ.Vhost)
+	conn, err := amqp091.Dial(uri)
+	if err != nil {
+		m.log.Error(context.TODO(), "Failed to connect to RabbitMQ", err)
+		return err
+	}
+	m.log.Debug(context.TODO(), "Connected to RabbitMQ", m.log.Any("uri", uri), m.log.Any("conn", conn))
+
+	m.conn = conn
+	return nil
+}
+
+func (m *AMQPManager) reconnectLoop() {
+	for {
+		reason, ok := <-m.conn.NotifyClose(make(chan *amqp091.Error))
+		if !ok {
+			break
+		}
+		m.log.Info(context.TODO(), "AMQP connection closed", m.log.Any("reason", reason))
+		m.conn = nil
+		for {
+			err := m.connect()
+			if err == nil {
+				m.log.Info(context.TODO(), "AMQP Sucessfully reconnected")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}
+}
+
+func (m *AMQPManager) GetChannel() (*amqp091.Channel, error) {
+	if m.conn == nil {
+		if err := m.connect(); err != nil {
+			return nil, err
+		}
+	}
+
+	ch, err := m.conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ch.ExchangeDeclare(
+		m.config.MessageBroker.Config.ExchangeName,
+		m.config.MessageBroker.Config.ExchangeType,
+		m.config.MessageBroker.Config.Durable,
+		m.config.MessageBroker.Config.AutoDelete,
+		m.config.MessageBroker.Config.Internal,
+		m.config.MessageBroker.Config.NoWait,
+		nil,
+	)
+	if err != nil {
+		m.log.Error(context.TODO(), "Failed to declare exchange", err)
+		ch.Close()
+		return nil, err
+	}
+
+	return ch, nil
+}
+
+func (m *AMQPManager) Close() {
+	if m.conn != nil {
+		m.conn.Close()
+	}
+}

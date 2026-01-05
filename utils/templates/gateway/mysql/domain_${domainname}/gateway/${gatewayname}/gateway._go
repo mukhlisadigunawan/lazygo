@@ -1,0 +1,28 @@
+package {{LowerCase .GatewayName}}
+
+import (
+	"context"
+	"{{.PackagePath}}/shared/lazygo"
+    "{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/domain_{{.DomainName}}/model/entity"
+	"{{.PackagePath}}/shared/infrastructure/database/mysql"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+)
+
+type gateway struct {
+    appData lazygo.ApplicationData
+    config  *config.Config
+    log     logger.Logger
+	mySql   *mysql.Mysql
+}
+
+// NewGateway ...
+func NewGateway(mySql *mysql.Mysql,log logger.Logger, appData lazygo.ApplicationData, cfg *config.Config) (*gateway) {
+
+	return &gateway{
+		mySql: mySql,
+	    log:     log,
+		appData: appData,
+		config:  cfg,
+	}
+}

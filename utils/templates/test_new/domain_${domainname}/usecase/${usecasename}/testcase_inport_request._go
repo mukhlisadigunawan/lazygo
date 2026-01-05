@@ -1,9 +1,0 @@
-package {{LowerCase .UsecaseName}}
-
-var requestData1 = InportRequest{
-
-}
-
-var requestData2 = InportRequest{
-
-}

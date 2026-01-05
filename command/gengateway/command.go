@@ -20,9 +20,12 @@ func Run(inputs ...string) error {
 
 	if len(inputs) < 1 {
 		err := fmt.Errorf("\n" +
-			"   # Create a gateway for all usecases with cloverdb sample implementation\n" +
-			"   gogen gateway inmemory\n" +
-			"     'inmemory' is a gateway name\n" +
+			"   # Create a gateway for all usecases with sample implementation\n" +
+			"   lazygo gateway {gateway_name}\n" +
+			"   	gateway_name : withmysql, withmongodb, withamqp, withredis, etc\n" +
+			"   lazygo gateway {gateway_driver} {gateway_name}\n" +
+			"   	gateway_driver : mysql, mongodb, amqp, redis, default is simple\n" +
+			"   	gateway_name : withmysql, withmongodb, withamqp, withredis, etc\n" +
 			"\n")
 
 		return err
@@ -31,6 +34,11 @@ func Run(inputs ...string) error {
 	packagePath := utils.GetPackagePath()
 	gcfg := utils.GetGogenConfig()
 	gatewayName := inputs[0]
+	driverName := "simple"
+	if len(inputs) > 1 {
+		driverName = inputs[0]
+		gatewayName = inputs[1]
+	}
 
 	obj := ObjTemplate{
 		PackagePath: packagePath,
@@ -38,8 +46,6 @@ func Run(inputs ...string) error {
 		DomainName:  utils.LowerCase(gcfg.Domain),
 		UsecaseName: nil,
 	}
-
-	driverName := gcfg.Gateway
 
 	// first we create the shared
 	// err := utils.CreateEverythingExactly("templates/", "shared", nil, obj, utils.AppTemplates)

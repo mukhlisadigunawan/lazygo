@@ -1,0 +1,45 @@
+package connections
+
+import (
+	"context"
+
+	"{{.PackagePath}}/shared/config"
+	"{{.PackagePath}}/shared/infrastructure/database/mongodb"
+	"{{.PackagePath}}/shared/infrastructure/database/mysql"
+	"{{.PackagePath}}/shared/infrastructure/logger"
+	"{{.PackagePath}}/shared/infrastructure/messaging/amqpclient"
+)
+
+type Connections struct {
+	MongoDB *mongodb.MongoDB
+	SqlDB   *mysql.Mysql
+	Amqp    *amqpclient.AMQPManager
+}
+
+func NewConnections(cfg *config.Config, log logger.Logger) (*Connections, error) {
+	ctx := context.Background()
+	mongoClient, err := mongodb.NewMongoDB(cfg, log)
+	if err != nil {
+		log.Error(ctx, "Connection MongoDb", err)
+		return nil, err
+	}
+	log.Info(ctx, "Connection", log.Any("MongoDb", "Success"))
+
+	amqpClient := amqpclient.NewAMQPManager(log, cfg)
+
+	mySqlClient := mysql.NewMySQL(cfg, log)
+
+	return &Connections{
+		MongoDB: mongoClient,
+		SqlDB:   mySqlClient,
+		Amqp:    amqpClient,
+	}, nil
+}
+
+func (c *Connections) Close(ctx context.Context, log logger.Logger) {
+	if c.MongoDB != nil {
+		if err := c.MongoDB.Client.Disconnect(ctx); err != nil {
+			log.Error(ctx, "Failed to disconnect from MongoDB: %v", err)
+		}
+	}
+}

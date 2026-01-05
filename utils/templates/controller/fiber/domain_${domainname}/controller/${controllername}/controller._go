@@ -13,15 +13,15 @@ import (
 )
 
 type controller struct {
-	gogen.ControllerStarter                // built-in http that has gracefullyshutdown
-	gogen.UsecaseRegisterer                // collect all the inports
+	lazygo.ControllerStarter                // built-in http that has gracefullyshutdown
+	lazygo.UsecaseRegisterer                // collect all the inports
 	Router                  *fiber.App     // the router from preference web framework
 	log                     logger.Logger  //
 	cfg                     *config.Config //
 	jwtToken                token.JWTToken //
 }
 
-func NewController(appData gogen.ApplicationData, log logger.Logger, cfg *config.Config, jwtToken token.JWTToken) gogen.ControllerRegisterer {
+func NewController(appData lazygo.ApplicationData, log logger.Logger, cfg *config.Config, jwtToken token.JWTToken) lazygo.ControllerRegisterer {
 
 	router := fiber.New()
 
@@ -44,7 +44,7 @@ func NewController(appData gogen.ApplicationData, log logger.Logger, cfg *config
 	address := cfg.Servers[appData.AppName].Address
 
 	return &controller{
-		UsecaseRegisterer: gogen.NewBaseController(),
+		UsecaseRegisterer: lazygo.NewBaseController(),
 		ControllerStarter: NewGracefullyShutdown(log, router, address),
 		Router:            router,
 		log:               log,

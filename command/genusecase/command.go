@@ -21,7 +21,7 @@ func Run(inputs ...string) error {
 		err := fmt.Errorf("\n" +
 			"   # Create a new usecase\n" +
 			"   lazygo usecase {CamelCaseName}\n" +
-			"   better use ResourceNameMethod format \n" +
+			"   use ResourceName + Method format \n" +
 			"   ex: MemberCreate, MemberDelete, MemberGetOne, MemberGetAll, MemberUpdate\n")
 
 		return err

@@ -1,7 +1,0 @@
-package {{LowerCase .UsecaseName}}
-
-var responseEmpty = InportResponse{}
-
-var responseData1 = InportResponse{
-
-}

@@ -37,12 +37,12 @@
     "amqp_config": {
       "auto_delete": false,
       "durable": true,
-      "exchange_name": "paxel_incentive_exchange",
+      "exchange_name": "exchange_name",
       "exchange_type": "direct",
       "internal": false,
       "no_wait": false,
       "queue": {
-        "attendance_process": "queue.paxelincentive.attendance.process"
+        "attendance_process": "queue.app_name.attendance.process"
       }
     },
     "rabbitmq": {
@@ -50,7 +50,7 @@
       "password": "password123",
       "port": 5672,
       "username": "admin",
-      "vhost": "paxel_incentive"
+      "vhost": "v_host_name"
     }
   },
   "servers": {

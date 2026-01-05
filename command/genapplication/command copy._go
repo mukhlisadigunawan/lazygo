@@ -19,8 +19,8 @@ type ObjTemplate struct {
 	PackagePath     string
 	DomainName      string
 	ApplicationName string
-	ControllerNames []*string
-	GatewayNames    []*string
+	ControllerName  []*string
+	GatewayName     []*string
 	UsecaseNames    []string
 }
 
@@ -57,16 +57,16 @@ func Run(inputs ...string) error {
 		PackagePath:     packagePath,
 		DomainName:      gfcg.Domain,
 		ApplicationName: applicationName,
-		ControllerNames: nil,
-		GatewayNames:    nil,
+		ControllerName:  nil,
+		GatewayName:     nil,
 	}
 
 	if len(inputs) >= 2 {
-		obj.ControllerNames[0] = &inputs[1]
+		obj.ControllerName[0] = &inputs[1]
 	}
 
 	if len(inputs) >= 3 {
-		obj.GatewayNames[0] = &inputs[2]
+		obj.GatewayName[0] = &inputs[2]
 	}
 
 	var objController, objGateway string
@@ -81,7 +81,7 @@ func Run(inputs ...string) error {
 		//driverName := "default"
 
 		// if controller name is not given, then we will do auto controller discovery strategy
-		if obj.ControllerNames == nil {
+		if obj.ControllerName == nil {
 
 			// look up the controller by foldername
 			objControllers, err = findAllObjController(gfcg.Domain)
@@ -110,20 +110,20 @@ func Run(inputs ...string) error {
 			var err error
 
 			// when controller name is given
-			objController, err = findControllerByName(gfcg.Domain, *obj.ControllerNames[0])
+			objController, err = findControllerByName(gfcg.Domain, *obj.ControllerName[0])
 			if err != nil {
 				return err
 			}
 
 			// in case the controller name is not found
 			if objController == "" {
-				return fmt.Errorf("no controller with name %s found", *obj.ControllerNames[0])
+				return fmt.Errorf("no controller with name %s found", *obj.ControllerName[0])
 			}
 
 		}
 
 		// if gateway name is not given, then we will do auto gateway discovery strategy
-		if obj.GatewayNames == nil {
+		if obj.GatewayName == nil {
 
 			// look up the gateway by foldername
 			objGateways, err = findAllObjGateway(gfcg.Domain)
@@ -153,28 +153,25 @@ func Run(inputs ...string) error {
 			var err error
 
 			// when gateway name is given
-			objGateway, err = findGatewayByName(gfcg.Domain, *obj.GatewayNames[0])
+			objGateway, err = findGatewayByName(gfcg.Domain, *obj.GatewayName[0])
 			if err != nil {
 				return err
 			}
 
 			// in case the gateway name is not found
 			if objGateway == "" {
-				return fmt.Errorf("no gateway with name %s found", *obj.GatewayNames[0])
+				return fmt.Errorf("no gateway with name %s found", *obj.GatewayName[0])
 			}
 		}
 
 		// ================
-		usecaseNames := make([]string, 0)
-		for _, g := range objControllers {
 
-			// get all usecase from controller
-			usecaseName, err := findAllUsecaseInportNameFromController(gfcg.Domain, g)
-			if err != nil {
-				return err
-			}
-			usecaseNames = append(usecaseNames, usecaseName...)
+		// get all usecase from controller
+		usecaseNames, err := findAllUsecaseInportNameFromController(gfcg.Domain, objController)
+		if err != nil {
+			return err
 		}
+
 		existingUsecaseNames := map[string]int{}
 
 		appFile := fmt.Sprintf("application/app_%s.go", strings.ToLower(applicationName))
@@ -202,10 +199,10 @@ func Run(inputs ...string) error {
 			unexistUsecase = append(unexistUsecase, usecaseName)
 		}
 		for i := range objGateways {
-			obj.GatewayNames = append(obj.GatewayNames, &objGateways[i])
+			obj.GatewayName = append(obj.GatewayName, &objGateways[i])
 		}
 		for i := range objControllers {
-			obj.ControllerNames = append(obj.ControllerNames, &objControllers[i])
+			obj.ControllerName = append(obj.ControllerName, &objControllers[i])
 		}
 		// obj.GatewayName = objGateways
 		// obj.ControllerName = objControllers

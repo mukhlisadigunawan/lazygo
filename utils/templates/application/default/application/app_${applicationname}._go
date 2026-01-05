@@ -1,8 +1,9 @@
 package application
 
 import (
-  "{{.PackagePath}}/domain_{{.DomainName}}/controller/{{LowerCase .ControllerName}}"
-  "{{.PackagePath}}/domain_{{.DomainName}}/gateway/{{LowerCase .GatewayName}}" {{range .UsecaseNames}}
+   {{range .ControllerNames}}
+  "{{$.PackagePath}}/domain_{{$.DomainName}}/controller/{{LowerCase .}}"{{end}} {{range .GatewayNames}}
+  "{{$.PackagePath}}/domain_{{$.DomainName}}/gateway/{{LowerCase .}}" {{end}}{{range .UsecaseNames}}
   "{{$.PackagePath}}/domain_{{$.DomainName}}/usecase/{{SnakeCase .}}" {{end}}
   "{{.PackagePath}}/shared/lazygo"
   "{{.PackagePath}}/shared/config"
@@ -24,22 +25,21 @@ func ({{CamelCase .ApplicationName}}) Run() error {
 
 	appData := lazygo.NewApplicationData(appName)
 
-	log := logger.NewSimpleJSONLogger(appData, cfg)
+	log := logger.NewZapLogger(appData, cfg)
 
 	jwtToken := token.NewJWTToken(cfg.JWTSecretKey)
+	{{range .GatewayNames}}
+	{{CamelCase .}}datasource := {{LowerCase .}}.NewGateway(log, appData, cfg){{end}}
+	{{range .ControllerNames}}
+	{{CamelCase .}}Driver := {{LowerCase .}}.NewController(appData, log, cfg, jwtToken)
 
-	datasource := {{LowerCase .GatewayName}}.NewGateway(log, appData, cfg)
-
-	primaryDriver := {{LowerCase .ControllerName}}.NewController(appData, log, cfg, jwtToken)
-
-	primaryDriver.AddUsecase(
-	    {{range .UsecaseNames}}
+	{{CamelCase .}}.AddUsecase(
+	    {{range $.UsecaseNames}}
 		{{RemoveSnakeCase . }}.NewUsecase(datasource, log),{{end}}
-	)
-
-	primaryDriver.RegisterRouter()
-
-	primaryDriver.Start()
+	){{end}}
+	{{range .ControllerNames}}
+	{{CamelCase .}}Driver.RegisterRouter()
+	{{CamelCase .}}.Start(){{end}}
 
 	return nil
 }

@@ -32,10 +32,10 @@ func CreateGogenConfig(err error, domainName string) error {
 		gogenDomainFile := "./.lazygo/lazygo_config.json"
 
 		data := model.GogenConfig{
-			Domain:     domainName,
-			Controller: "gin",
-			Gateway:    "simple",
-			Crud:       "gin",
+			Domain: domainName,
+			// Controller: "gin",
+			// Gateway:    "simple",
+			// Crud:       "gin",
 		}
 
 		jsonInBytes, err := json.MarshalIndent(data, "", " ")

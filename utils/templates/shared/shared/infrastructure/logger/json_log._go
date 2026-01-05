@@ -21,7 +21,7 @@ const (
 	Production  Mode = "production"
 )
 
-func NewSimpleJSONLogger(appData lazygo.ApplicationData, cfg *config.Config) Logger {
+func NewZapLogger(appData lazygo.ApplicationData, cfg *config.Config) Logger {
 	// Initialize logger based on debug mode and logging level from config
 	loggingLevel := 0
 	if cfg.AppMode == "dev" {

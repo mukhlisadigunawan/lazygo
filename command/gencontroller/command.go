@@ -44,29 +44,31 @@ func Run(inputs ...string) error {
 
 	packagePath := utils.GetPackagePath()
 
-	if len(inputs) < 1 {
+	if len(inputs) < 2 {
 
 		msg := fmt.Errorf("\n" +
 			"   # Create a controller for all usecases using default as default web framework\n" +
-			"   lazygo controller {controller_name}\n" +
-			"   ex: restapi, amqp, graphql, etc" +
+			"   lazygo controller {framwork/library} {controller_name}\n" +
+			"   framework : fiber, gin, grpc" +
+			"   controller name : restapi, amqp, grpc, etc" +
 			"\n")
 
 		return msg
 	}
 
 	gcfg := utils.GetGogenConfig()
-	controllerName := inputs[0]
-	driverName := gcfg.Controller
+	controllerName := inputs[1]
+
+	driverName := inputs[0]
 
 	usecaseFolderName := fmt.Sprintf("domain_%s/usecase", gcfg.Domain)
 
 	usecases := make([]*Usecase, 0)
 
-	err := utils.CreateEverythingExactly("templates/", "shared", nil, nil, utils.AppTemplates)
-	if err != nil {
-		return err
-	}
+	// err := utils.CreateEverythingExactly("templates/", "shared", nil, nil, utils.AppTemplates)
+	// if err != nil {
+	// 	return err
+	// }
 
 	fileInfo, err := os.ReadDir(usecaseFolderName)
 	if err != nil {

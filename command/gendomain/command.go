@@ -19,7 +19,7 @@ type ObjTemplate struct {
 }
 
 func Run(inputs ...string) error {
-
+	var err error
 	if len(inputs) < 1 {
 		err := fmt.Errorf("\n" +
 			"   # Initiate lazygo project with default input. You may change later under .lazygo folder\n" +
@@ -60,7 +60,7 @@ func Run(inputs ...string) error {
 		"domainname": utils.LowerCase(domainName),
 	}
 
-	err := utils.CreateEverythingExactly("templates/", "shared", nil, obj, utils.AppTemplates)
+	err = utils.CreateEverythingExactly("templates/", "shared", nil, obj, utils.AppTemplates)
 	if err != nil {
 		return err
 	}

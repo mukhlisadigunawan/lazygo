@@ -13,7 +13,7 @@ type gracefullyShutdown struct {
 	address  string
 }
 
-func NewGracefullyShutdown(log logger.Logger, fiberApp *fiber.App, address string) gogen.ControllerStarter {
+func NewGracefullyShutdown(log logger.Logger, fiberApp *fiber.App, address string) lazygo.ControllerStarter {
 	return &gracefullyShutdown{
 		fiberApp: fiberApp,
 		log:      log,
